@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<resources>
+  <properties>
+    <!-- Use military format time in 24-hours setting -->
+    <property id="UseMilitaryFormat" type="boolean">false</property>
+  </properties>
+  <strings>
+    <!-- Setting strings for properties -->
+    <string id="MilitaryFormatTitle">Military format for 24 hour time</string>
+  </strings>
+  <settings>
+    <setting propertyKey="@Properties.UseMilitaryFormat" title="@Strings.MilitaryFormatTitle">
+      <settingConfig type="boolean"/>
+    </setting>
+  </settings>
+</resources>

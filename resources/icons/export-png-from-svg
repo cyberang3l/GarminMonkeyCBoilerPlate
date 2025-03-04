@@ -1,0 +1,55 @@
+#!/bin/bash
+set -eu
+
+cd "$(dirname "${0}")" || exit 1
+
+svg_in="${1}"
+png_out="${2}"
+dpi=${3:-96}
+
+# Workaround to support running multiple parallel instances of inkscape:
+# https://gitlab.com/inkscape/inkscape/-/issues/4716#note_1898150983
+export SELF_CALL=xxx
+function inkscape_convert() {
+	local in="${1}"
+	local out="${2}"
+	echo "converting ${in} -> ${out}"
+	inkscape --export-area-page --export-overwrite --export-type=png --export-dpi="${dpi}" --export-filename="${out}" "${in}"
+}
+
+if ! [[ "${svg_in}" =~ battery[0-9]+.svg ]]; then
+	inkscape_convert "${svg_in}" "${png_out}"
+	exit 0
+fi
+
+# All below here is autogenerating many battery pngs
+svg_in=battery.svg
+battery_percent=$(echo "${png_out}" | grep -Po "battery\K.*(?=-)")
+max_width_val=$(grep -C2 batteryFill "${svg_in}" | grep -Po "width=\"\K(\d+(\.)?\d+)")
+
+new_svg_in="battery${battery_percent}.svg"
+trap 'rm -f ${new_svg_in}' EXIT
+
+new_png_out="battery${battery_percent}-${dpi}dpi.png"
+new_width_val=$(python -c "print(${max_width_val} / 100 * ${battery_percent})")
+# Change the fill level
+sed '/batteryFill/{N;s/'"${max_width_val}"'/'"${new_width_val}"'/}' "${svg_in}" >"${new_svg_in}"
+# Now change the color of the border and fill
+if [[ ${battery_percent} -gt 24 ]]; then
+	# Green
+	green="#00ff00"
+	sed -i 's/fill:#[^;]*/fill:'"${green}"'/' "${new_svg_in}"
+	sed -i 's/stroke:#[^;]*/stroke:'"${green}"'/' "${new_svg_in}"
+elif [[ ${battery_percent} -gt 9 ]]; then
+	# Orange
+	orange="#ffaa00"
+	sed -i 's/fill:#[^;]*/fill:'"${orange}"'/' "${new_svg_in}"
+	sed -i 's/stroke:#[^;]*/stroke:'"${orange}"'/' "${new_svg_in}"
+else
+	# Red
+	red="#ff0000"
+	sed -i 's/fill:#[^;]*/fill:'"${red}"'/' "${new_svg_in}"
+	sed -i 's/stroke:#[^;]*/stroke:'"${red}"'/' "${new_svg_in}"
+fi
+# Change also the color of the fill and border if less than 20% battery
+inkscape_convert "${new_svg_in}" "${new_png_out}"

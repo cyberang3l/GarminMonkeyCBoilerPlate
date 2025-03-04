@@ -1,0 +1,15 @@
+#!/bin/bash
+set -eu
+
+# shellcheck disable=SC2207,SC2002
+submodules=($(cat .gitmodules | grep "path =" | awk -F= '{print $2}' | sed 's/\(^[[:space:]]\+\|[[:space:]]\+$\)//g'))
+extra_find_args=()
+for sm in "${submodules[@]}"; do
+	extra_find_args+=("-not")
+	extra_find_args+=("-path")
+	extra_find_args+=("./${sm}/*")
+done
+
+# Use simple vim indentation to indent monkey C files
+find . -name \*.mc -type f "${extra_find_args[@]}" -print -exec vim -X -E --not-a-term --noplugin -s +'set tabstop=2' +'set shiftwidth=2' +'set expandtab' +'normal gg=G' +"wq!" {} \;
+find . -name \*.xml -type f "${extra_find_args[@]}" -print -exec xmllint --format {} --output {} \;

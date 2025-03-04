@@ -1,0 +1,5 @@
+[submodule "garmin-linux-development-environment"]
+	path = garmin-linux-development-environment
+	url = https://github.com/cyberang3l/garmin-linux-development-environment.git
+	branch = main
+	update = rebase

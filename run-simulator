@@ -1,0 +1,68 @@
+#!/bin/bash
+set -eu
+
+if [[ $# -lt 5 ]]; then
+	>&2 echo "Please do not use this file directly - use the make commands instead"
+	>&2 echo "Sample command: make enduro3-run-in-simulator"
+	exit 1
+fi
+# This file is intented to be used through the Makefile - do
+# not use independently. Try to run:
+#
+#   make enduro3-run-in-simulator
+GARMIN_ENV_FILE="${1}"
+ACTIVE_SDK_PATH="${2}"
+BUILD_PATH="${3}"
+BASE_APP_NAME="${4}"
+DEVICE_ID="${5}"
+DEBUG="${6-}"
+RUN_DEBUGGER=0
+if [[ -n ${DEBUG} ]]; then
+	if [[ "${DEBUG}" == "DEBUG" ]]; then
+		RUN_DEBUGGER=1
+		>&2 echo "Read https://developer.garmin.com/connect-iq/core-topics/debugging/ for docs on using mdd"
+	else
+		>&2 echo "Expecting 6th argument to be 'DEBUG' in order to run in debug mode"
+		>&2 echo "Got '${DEBUG}' instead"
+		exit 1
+	fi
+fi
+
+PRG_FILE=${BUILD_PATH}/${BASE_APP_NAME}.prg
+if [[ ${RUN_DEBUGGER} -eq 1 ]]; then
+	PRG_FILE=${BUILD_PATH}/debug_${BASE_APP_NAME}.prg
+fi
+SETTINGS_FILE=${BUILD_PATH}/${BASE_APP_NAME}-settings.json
+
+#shellcheck disable=SC1090
+source "${GARMIN_ENV_FILE}"
+SDK_BIN="${ACTIVE_SDK_PATH}/bin"
+SDK_MANAGER_BIN="${SDK_MANAGER_PATH}/bin"
+SDK_MANAGER_LIB=${SDK_MANAGER_PATH}/usr/lib/x86_64-linux-gnu/
+PATH="${SDK_BIN}":"${SDK_MANAGER_BIN}":${PATH}
+LD_LIBRARY_PATH="${SDK_MANAGER_LIB}"
+export PATH
+export LD_LIBRARY_PATH
+
+# Start the simulator
+{ "${ACTIVE_SDK_PATH}/bin/simulator" & }
+# Wait for a couple of seconds to start
+sleep 1
+
+if [[ -f "${SETTINGS_FILE}" ]]; then
+	# If we have a settings file, copy that file over too.
+	# See https://forums.garmin.com/developer/connect-iq/i/bug-reports/bug-unable-to-detect-settings-file-for-watchface-app-on-linux
+	if [[ ${RUN_DEBUGGER} -eq 1 ]]; then
+		cp "${SETTINGS_FILE}" "/tmp/com.garmin.connectiq/GARMIN/Settings/${BASE_APP_NAME^^}-settings.json"
+		"${ACTIVE_SDK_PATH}/bin/mdd" -e "${PRG_FILE}" -x "${PRG_FILE}.debug.xml" -d "${DEVICE_ID}"
+	else
+		"${ACTIVE_SDK_PATH}/bin/monkeydo" "${PRG_FILE}" "${DEVICE_ID}" -a "${SETTINGS_FILE}:GARMIN/Settings/${BASE_APP_NAME^^}-settings.json"
+	fi
+else
+	# Just inject the PRG file for the corresponding device into the simulator
+	if [[ ${RUN_DEBUGGER} -eq 1 ]]; then
+		"${ACTIVE_SDK_PATH}/bin/mdd" -e "${PRG_FILE}" -x "${PRG_FILE}.debug.xml" -d "${DEVICE_ID}"
+	else
+		"${ACTIVE_SDK_PATH}/bin/monkeydo" "${PRG_FILE}" "${DEVICE_ID}"
+	fi
+fi

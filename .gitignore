@@ -1,0 +1,5 @@
+build
+bin
+.developer_key_path
+Device*.txt
+*.png

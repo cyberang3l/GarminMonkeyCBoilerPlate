@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- all resources EXCEPT settings -->
+<resources>
+  <drawables>
+    <bitmap id="LauncherIcon96DPI" filename="icons/launcher_icon-96dpi.png"/>
+  </drawables>
+  <strings>
+    <string id="AppName">GarmYrFace</string>
+  </strings>
+  <layouts>
+    <layout id="WatchFace">
+      <!-- Background is defined in the BoilerplateApp.mc file -->
+      <drawable class="Background"/>
+      <label id="TimeLabel" x="center" y="center" justification="Graphics.TEXT_JUSTIFY_CENTER" font="Graphics.FONT_NUMBER_HOT"/>
+    </layout>
+  </layouts>
+</resources>
