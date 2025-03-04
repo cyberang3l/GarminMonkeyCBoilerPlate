@@ -1,4 +1,4 @@
-.PHONY: all clean clean-all format-code %-run-in-simulator %-run-in-debugger
+.PHONY: all clean clean-all format-code gen_uuid %-run-in-simulator %-run-in-debugger
 
 .DEFAULT_GOAL = all
 
