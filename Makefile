@@ -38,13 +38,15 @@ SOURCES=$(wildcard *.xml) $(wildcard source/*.mc) $(wildcard resources*/*) $(wil
 
 # Get the supported devices from the manifest file
 SUPPORTED_DEVICES=$(shell cat manifest.xml | grep -oP "iq:product id=\"\K\w+")
+SIM_DEVICES=$(addsuffix _sim, $(SUPPORTED_DEVICES))
+ALL_DEVICES=$(SUPPORTED_DEVICES) $(SIM_DEVICES)
 
 # Each device will have a different binary (PRG file). Auto generate
 # the list of files that is expected to be found for each device. Each
 # of these files become a Make target
-prgs_release=$(addsuffix /$(PRG_FILE), $(addprefix build/, $(SUPPORTED_DEVICES)))
-prgs_debug=$(addsuffix /debug_$(PRG_FILE), $(addprefix build/, $(SUPPORTED_DEVICES)))
-iqs=$(addsuffix /$(IQ_FILE), $(addprefix build/, $(SUPPORTED_DEVICES)))
+prgs_release=$(addsuffix /$(PRG_FILE), $(addprefix build/, $(ALL_DEVICES)))
+prgs_debug=$(addsuffix /debug_$(PRG_FILE), $(addprefix build/, $(ALL_DEVICES)))
+iqs=$(addsuffix /$(IQ_FILE), $(addprefix build/, $(ALL_DEVICES)))
 # Assign a TARGET-Specifc DEVICE_ID variable.
 # Convert the slashes to spaces with substr, and pick the
 # second word that is the DEVICE ID (enduro3, fenix7, etc)
@@ -77,16 +79,16 @@ export-for-iq-store: build/$(IQ_FILE)
 # We also need to add simulator targets to allow for testing
 SIMULATOR_TARGETS = $(addsuffix -run-in-simulator, $(SUPPORTED_DEVICES))
 %-run-in-simulator:
-	make build/$*/$(PRG_FILE)
-	./run-simulator "$(GARMIN_LINUX_DEV_ENV_PATH)/garmin-env" "$(ACTIVE_SDK_PATH)" "build/$*" "$(BASE_NAME)" "$*"
+	make build/$*_sim/$(PRG_FILE)
+	./run-simulator "$(GARMIN_LINUX_DEV_ENV_PATH)/garmin-env" "$(ACTIVE_SDK_PATH)" "build/$*_sim" "$(BASE_NAME)" "$*"
 $(SIMULATOR_TARGETS): %-run-in-simulator
 
 # We also need to add debugger targets to allow for using with mdd debugger
 # https://developer.garmin.com/connect-iq/core-topics/debugging/
 DEBUG_TARGETS = $(addsuffix -run-in-debugger, $(SUPPORTED_DEVICES))
 %-run-in-debugger:
-	make build/$*/debug_$(PRG_FILE)
-	./run-simulator "$(GARMIN_LINUX_DEV_ENV_PATH)/garmin-env" "$(ACTIVE_SDK_PATH)" "build/$*" "$(BASE_NAME)" "$*" "DEBUG"
+	make build/$*_sim/debug_$(PRG_FILE)
+	./run-simulator "$(GARMIN_LINUX_DEV_ENV_PATH)/garmin-env" "$(ACTIVE_SDK_PATH)" "build/$*_sim" "$(BASE_NAME)" "$*" "DEBUG"
 $(DEBUG_TARGETS): %-run-in-debugger
 
 # The 'all' target should only build the PRGs for all the supported devices
