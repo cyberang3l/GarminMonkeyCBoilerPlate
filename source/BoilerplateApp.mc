@@ -13,7 +13,7 @@ class Background extends WatchUi.Drawable {
     Drawable.initialize(dictionary);
   }
 
-  function draw(dc) {
+  function draw(dc as Graphics.Dc) {
     // Set the background color then call to clear the screen
     dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_BLACK);
     dc.clear();
@@ -48,7 +48,7 @@ class BoilerplateAppView extends WatchUi.WatchFace {
     }
   }
 
-  function onLayout(dc) {
+  function onLayout(dc as Graphics.Dc) {
     setLayout(Rez.Layouts.WatchFace(dc));
 
     configAppSettings(true);
