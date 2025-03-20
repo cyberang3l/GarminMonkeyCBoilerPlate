@@ -98,7 +98,7 @@ class BoilerplateAppView extends WatchUi.WatchFace {
 
 class BoilerplateApp extends Application.AppBase {
 
-  hidden var _mainView;
+  hidden var _mainView as BoilerplateAppView or Null;
 
   function initialize() {
     AppBase.initialize();
